@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Your projects</title>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+        <link href="styles/list"  rel="stylesheet"  type="text/css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet"> 
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+ 
+    </head>
+    <body>
+        <nav>
+            <div class="navbar navbar-light navbar-expand-lg bg-light" >
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="#">✸ Tau Board</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Projects</a>
+                        </li>
+                        <li class="nav-item">
+                        <a class="nav-link" href="/aboutsite">About Site</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/logout">Log Out</a>
+                        </li>
+                    </ul>
+                    <div id="addProject"  class="d-flex">
+                            <button  class="btn btn-outline-success"  onclick="displayCreateProjectForm()"> Create Project</button>
+                    </div>
+                    <div id="addProjectForm" class="invisible">
+                            <input id="nProjectName" class="form-control me-2"  placeholder="Project Name" type="text_field" value="">    
+                                                                    
+                            <button type="button" class="btn btn-outline-success"  onclick="addToList()">Create</button>
+                    </div>
+                </div>
+
+               </div>
+
+                        
+                
+                
+            </div>
+        </nav>
+
+        <nav class="context-menu">
+            <ul class="context-menu__items">
+                <li class="context-menu__item">
+                <button id="delete" class="btn btn-outline-success">Delete</button>
+                </li>
+            </ul>
+        </nav>
+        
+        <div id="List"></div>
+
+        <script>
+            var projects;
+
+            let currentDeleteId;
+
+            document.querySelector('#delete').addEventListener('click', (e)=>
+            {
+                removeproject();
+            });
+
+            function loadToDoList()
+            {
+
+                $.ajax(
+                    {
+                        type:"GET",
+                        url:'/api/todolists',
+                        success: (data) => {
+                            projects = JSON.parse(data);
+                            refreshProjectsUI();
+                        }
+                    }
+                );
+
+            }
+
+            function refreshProjectsUI()
+            {
+                console.log(projects);
+                if(projects.length > 0)
+                {
+                    document.getElementById("List").innerHTML = "";
+                    var out = "";
+                    out += '<div class="row">'; 
+
+                    for(var i = 0;i < projects.length; i++)
+                    {
+                        if(i%3==0 && i!= 0)
+                        {   
+                            out += '</div>';
+                            out += '<div class="row">';
+                            console.log('ok');
+                        }
+                        var project = projects[i];
+                        out += '<div class="col-12 col-lg-4 projectButtonDiv"><button id="'+project.id+'" class="projectButton" onclick="openProject('+project.id+')">'+ project.projectname+"</button></div>";
+                    }
+
+                    out += '</div>';
+                    console.log(out);
+                    document.getElementById("List").innerHTML= out;
+                }
+                
+                else
+                {
+                     document.getElementById("List").innerHTML = '<h1 style="margin-top:20rem;color:white; text-align:center;">Empty</h1>';
+                }
+
+            }
+
+            function addToList()
+            {
+               var newProjectName = document.getElementById("nProjectName").value;
+               var nameExsit = false;
+                document.getElementById('addProjectForm').classList.add('invisible');
+                document.getElementById('addProjectForm').classList.remove('d-flex');
+
+                document.getElementById('addProject').classList.remove('invisible');
+                document.getElementById('addProject').classList.add('d-flex');
+
+
+                if(newProjectName!=null && newProjectName.length > 0)
+               {
+                   projects.forEach((project)=>{
+                        if(project.projectname === newProjectName)
+                        {
+                            nameExsit = true;
+                        }
+                    });
+
+                    if(nameExsit)
+                    {
+                        console.log("Such a project already exists!");
+                    }
+                    else
+                    {
+                    
+                        
+                        $.post("/api/todolists",
+                        {
+                            newName: newProjectName,
+                        },
+                        function(data, status, jqXHR){
+                            console.log();
+                                if(jqXHR.status == 201)
+                                {
+                                  console.log("Created!");
+                                    loadToDoList();
+                                }
+                        });
+                        
+
+                    }
+               }
+            }
+
+            function openProject(id)
+            {
+               window.open("/project?id="+id,"_self");
+            }
+
+            function displayCreateProjectForm()
+            {
+                document.getElementById('addProjectForm').classList.remove('invisible');
+                document.getElementById('addProjectForm').classList.add('d-flex');
+
+                document.getElementById('addProject').classList.add('invisible');
+                document.getElementById('addProject').classList.remove('d-flex');
+
+            }
+            
+            document.addEventListener('contextmenu', (e) => {
+                if(e.target.classList[0] == "projectButton")
+                {
+                    setPosContextMenu(e);
+
+                    let a = document.getElementsByClassName('context-menu')[0];
+                    currentDeleteId = e.target.id;
+                    
+                }
+                e.preventDefault();
+
+            });
+            document.addEventListener('click', ()=>
+            {
+                let a = document.getElementsByClassName('context-menu')[0];
+                a.classList.remove('context-menu--active');
+                a.querySelector('#delete').eve
+                
+            });
+
+            function removeproject()
+            {
+
+                console.log(currentDeleteId);
+                $.ajax(
+                    {
+                        url:'/api/todolists',
+                        type:'DELETE',
+                        data: {'pid': currentDeleteId},
+                        success: () => {
+                            console.log('delete');
+                            loadToDoList();
+                            
+                        }
+
+                    }
+                );
+            }
+
+
+            function setPosContextMenu(e)
+            {
+                let a = document.getElementsByClassName('context-menu')[0];
+                a.classList.add('context-menu--active');
+                a.style.left = e.pageX + "px";
+                a.style.top = e.pageY + "px";
+            }
+
+            loadToDoList();
+        </script>
+
+    </body>
+</html>

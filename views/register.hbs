@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="keywords" content="projekty, uczen,lomickiewicz,jakub,krolak,programowanie">
+    <meta name="description" content="Cześć! Nazywam się Jakub Królak">
+    <meta name="author" content="Jakub Królak">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+    <link href="styles/list"  rel="stylesheet"  type="text/css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet"> 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+ 
+
+</head>
+
+<body>
+
+
+    <div id="main">
+        <form style="width:fit-content;" action="/register" method="post">
+            <label for="mail">
+                <h6>Email</h6>
+            </label>
+            <br />
+            <input type="email"  class="form-control me-2"   id="email" name="email"><br />
+            <label for="password">
+                <h6>Password</h6>
+            </label>
+             <br />
+            <input type="password"  class="form-control me-2"   id="password" name="password"><br />
+            <label for="rpassword">
+                <h6>Repeat password</h6>
+            </label><br />
+            <input type="password"   class="form-control me-2"   id="rpassword" name="rpassword"><br />
+            <input type="submit" class="btn btn-outline-success" value="Submit">
+        </form>
+    </div>
+    <div style="color:red;width:100%; text-align:center; margin-top:10px"><h6>{{mErr}}</h6></div><br/>
+    <div style="color:red; width:100%; text-align:center;"><h6>{{pErr}}</h6></div><br/>
+
+</body>
+
+</html>

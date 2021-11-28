@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        
+        <title id="nameProject"></title>
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet"> 
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+        <link rel="stylesheet" href="/styles/main"type="text/css" >
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+ 
+
+    </head>
+    <body>
+
+        <nav>
+            <div class="navbar navbar-light navbar-expand-lg bg-light" >
+
+                <div class="container-fluid">
+                <a class="navbar-brand" href="/list">✸ Tau Board</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                        <a class="nav-link" aria-current="page" href="/list">Projects</a>
+                        </li>
+                        <li class="nav-item">
+                        <a class="nav-link" href="/aboutsite">About Site</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/logout">Log Out</a>
+                        </li>
+
+                    </ul>
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                        </ul>
+                        <div id="addList"  class="d-flex">
+                                <button id="addListBtn"  class="btn btn-outline-success" onclick="displayField()">Add a another list + </button>
+                        </div>
+                        <div id="addListForm" class="invisible">
+                            <input id="newListName" class="form-control me-2"  placeholder="List Name"  type="text_field"/>
+                            <button class="btn btn-outline-success" onclick="addList()">Add</button>  
+                        </div>
+                    </div>
+                    
+                    
+                </div>
+
+            </div>
+
+        </nav>
+        
+        <nav class="context-menu">
+            <ul class="context-menu__items">
+                <li class="context-menu__item">
+                <button id="delete" onclick="deleteList()" class="btn btn-outline-success">Delete list</button>
+                </li>
+            </ul>
+        </nav>
+        
+        <div id="container">
+            <br/>
+        </div>
+        
+        
+        
+        <script>
+            var projectId = {{projectID}};
+            var projectInfo;
+            let listElementToDelete = null;
+            function loadProject()
+            {
+                $.get('/api/todolists?id='+projectId,
+                function(data, status, jqXHR)
+                {
+                    if(jqXHR.status == 200)
+                    {
+                        console.log(data);
+                        projectInfo = JSON.parse(data);
+                        renderProject();  
+                    }
+                });
+            }
+
+            function renderProject()
+            {
+                $('#container').html(projectInfo[0].context);
+                $('#nameProject').html(projectInfo[0].projectname);
+               initEvents();
+               initEventsForAddBtns();
+            }
+
+            loadProject();
+
+            function initEvents()
+            {
+                const draggabels = document.querySelectorAll('.block');
+                const containers = document.querySelectorAll('.list');
+                var dragging = false;
+
+                draggabels.forEach(draggabel =>{
+                    draggabel.addEventListener('dragstart',()=>{
+                        dragging = true;
+                        draggabel.classList.add('dragging');
+                        
+                    });
+
+                    draggabel.addEventListener('dragend',()=>{
+                        dragging = false;
+                        draggabel.classList.remove('dragging');
+                        
+                        updateDate();
+                    });
+
+                    draggabel.addEventListener('contextmenu', ()=>{
+                        console.log('del');
+                    });
+                });
+
+                
+
+                containers.forEach(container => {
+                    container.addEventListener('dragover', (e) => {
+                        if(dragging)
+                        {
+                            e.preventDefault();
+                            var afterElement = getDragAfterElement(container, e.clientY);
+
+                            const draggabel = document.querySelector('.dragging');
+                            if(afterElement == null)
+                            {
+                                afterElement = container.querySelector('.addCardContainer');
+                            }
+
+                            container.insertBefore(draggabel,afterElement);
+                        }
+
+                    });
+                });
+
+                
+
+                function getDragAfterElement(container, y)
+                {
+                   const draggabelElements = [...container.querySelectorAll('.block:not(.dragging)')];
+
+                   return draggabelElements.reduce((closet, child)=>{
+                       const box = child.getBoundingClientRect();
+                       const offset = y - box.top -box.height / 2 ;
+                       
+
+                        if(offset < 0  && offset > closet.offset)
+                        {
+                            return {offset:offset, element:child};
+                        }
+                        else
+                        {
+                            return closet;
+                        }
+
+                   }, {offset: Number.NEGATIVE_INFINITY} ).element;
+                }
+
+
+                const removeBlockBtns = document.querySelectorAll('.removeBlock');
+
+                removeBlockBtns.forEach(button => {
+                    button.addEventListener('click', ()=>{
+                        button.parentElement.remove();
+                        updateDate();
+                    });
+                });
+               
+            }
+
+            function initEventsForAddBtns()
+            {
+                const addCardDisplayBtns = document.querySelectorAll('.addCardDisplay');
+
+                addCardDisplayBtns.forEach(button => {
+                    button.addEventListener('click', ()=>
+                    {
+                       button.parentElement.classList.add('invisible');
+
+                       button.parentElement.parentElement.querySelector('.addCardForm').classList.remove('invisible');
+                       button.parentElement.parentElement.querySelector('.addCardForm').classList.add('d-flex');
+
+                    });
+                });
+
+                const addCardBtns = document.querySelectorAll('.addCard');
+                addCardBtns.forEach(button => {
+                    button.addEventListener('click', ()=>
+                    {
+                        button.parentElement.classList.add('invisible');
+                        button.parentElement.classList.remove('d-flex');
+
+                        button.parentElement.parentElement.querySelector('.addCardDisplayForm').classList.remove('invisible');
+                        const list =  button.parentElement.parentElement.parentElement;
+
+                        var contextCard =  button.parentElement.querySelector('.addcardField').value;
+                        if(contextCard)
+                        {
+                            const afterElement = list.querySelector('.addCardContainer');
+                        
+                            const node = document.createElement('div');
+                            const deletenode = document.createElement('button');
+                            const textnode = document.createTextNode(contextCard);
+                            const textnodeDelete = document.createTextNode('✘'); // X mark
+                            node.append(textnode);
+                            deletenode.append(textnodeDelete);
+                            deletenode.classList.add('removeBlock');
+                            node.appendChild(deletenode);
+                            node.classList.add('block');
+                            node.draggable = true;
+
+                            list.insertBefore(node,afterElement);
+                             button.parentElement.querySelector('.addcardField').value = null;
+                            console.log('click');
+                            initEvents();
+                            updateDate();
+                        }
+                    });
+                });
+            }
+            
+            function displayField()
+            {
+                document.querySelector('#addList').classList.add('invisible');
+                document.querySelector('#addList').classList.remove('d-flex');
+
+                document.querySelector('#addListForm').classList.remove('invisible');
+                document.querySelector('#addListForm').classList.add('d-flex');
+
+            }
+
+            function addList()
+            {
+                var newListName = document.getElementById('newListName').value;
+                
+                console.log(newListName);
+                if(newListName != null && newListName.length > 0)
+                {
+                    let container = document.querySelector("#container");
+                    let lastRowCon = container.lastElementChild;
+                    var out = "";
+                    var list = '<div class="listCon col-12 col-lg-4"><div class="list"><h2 class="header">'+newListName+'</h2><div class="addCardContainer"><div class="addCardDisplayForm"><button  class="addCardDisplay btn btn-outline-success">Add a another card + </button></div><div class="addCardForm invisible"><input class="addcardField form-control me-2" type="text_field" /><button class="btn btn-outline-success addCard">Add</button></div></div></div></div>';
+                    if(container.childElementCount > 0)
+                    {
+                        if(lastRowCon.childElementCount < 3)
+                        {
+                            lastRowCon.innerHTML += list;
+                        }
+                        else
+                        {
+                            out += '<div class="row row-list">';
+                            out += list;
+                            out += '</div>';
+                        }
+                    
+                    }
+                    else
+                    {
+                        out += '<div class="row row-list">';
+                        out += list;
+                        out += '</div>';
+                    }
+
+                    container.innerHTML += out;
+
+                    updateDate();
+                    initEvents();
+                    initEventsForAddBtns();
+                }
+
+                document.querySelector('#addList').classList.remove('invisible');
+                document.querySelector('#addList').classList.add('d-flex');
+
+                document.querySelector('#addListForm').classList.add('invisible');
+                document.querySelector('#addListForm').classList.remove('d-flex');
+
+               document.getElementById('newListName').value = '';
+                
+            }
+
+            function updateDate()
+            {
+                    $.post('/api/todolists',
+                    {
+                        id:projectId,
+                        context:" "+$('#container').html()
+                    }
+                    ,
+                    function(data, status, jqXHR)
+                    {
+                        if(jqXHR.status == 200)
+                        {
+                            console.log('Success add');
+                        }
+                    });
+            }
+
+            
+            document.addEventListener('contextmenu', (e) => {
+                let go = true;
+                let parent = e.target;
+                while(go)
+                {
+                    if(parent.classList[0] == "list")
+                    {
+                        go=false;
+                    }
+                    else if(parent.localName == "body")
+                    {
+                        go=false;
+                    }
+                    else
+                    {
+                        parent = parent.parentElement;
+                    }
+                    
+                }
+                console.log(parent);
+                if(parent.classList[0] == "list")
+                {
+                    if(listElementToDelete != null)
+                    {
+                        listElementToDelete.style = "";
+                    }
+                    setPosContextMenu(e);
+                    listElementToDelete = parent;
+                    parent.style = "border:2px dashed white";
+                    
+                }
+                e.preventDefault();
+
+            });
+            
+            document.addEventListener('click', ()=>
+            {
+                let a = document.getElementsByClassName('context-menu')[0];
+                if(listElementToDelete != null)
+                {
+                    listElementToDelete.style = "";
+                }
+                
+                a.classList.remove('context-menu--active');
+                
+            });
+
+            function setPosContextMenu(e)
+            {
+                let a = document.getElementsByClassName('context-menu')[0];
+                a.classList.add('context-menu--active');
+                a.style.left = e.pageX + "px";
+                a.style.top = e.pageY + "px";
+            }
+
+            function deleteList()
+            {
+                listElementToDelete.parentNode.removeChild(listElementToDelete);
+                listElementToDelete = null;
+                updateDate();
+            }
+
+            function clean()
+            {
+                const dumpster = document.querySelector('#dumpster');
+                dumpster.innerHTML = '';
+            }
+        </script>
+
+    </body>
+</html>
